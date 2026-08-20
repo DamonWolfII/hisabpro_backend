@@ -30,6 +30,10 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest request
     ) {
+        System.out.println(
+                ">>> LOGIN CONTROLLER HIT: " + request.email()
+        );
+
         return ResponseEntity.ok(
                 authService.login(request)
         );

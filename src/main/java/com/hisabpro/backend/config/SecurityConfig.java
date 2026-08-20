@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
 
 import java.util.List;
 
@@ -111,13 +112,27 @@ public class SecurityConfig {
 
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers(
-                                "/api/auth/**",
-                                "/api/health"
+                                HttpMethod.POST,
+                                "/api/auth/login"
                         ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/refresh"
+                        ).permitAll()
+
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/logout"
+                        ).permitAll()
+
+                        .requestMatchers("/api/health").permitAll()
+
                         .anyRequest().authenticated()
                 )
-
                 // Return 401 when authentication is required
                 // but the request is not authenticated.
                 .exceptionHandling(exception -> exception
