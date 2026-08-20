@@ -57,7 +57,8 @@ public class SecurityConfig {
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
-                "https://hisabprofrontend.vercel.app"
+                "https://hisabprofrontend.vercel.app",
+                "https://hisabprofrontend-production.up.railway.app"
         ));
 
         configuration.setAllowedMethods(
