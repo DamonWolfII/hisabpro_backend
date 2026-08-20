@@ -125,11 +125,6 @@ public class SecurityConfig {
                                 "/api/auth/refresh"
                         ).permitAll()
 
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/auth/logout"
-                        ).permitAll()
-
                         .requestMatchers("/api/health").permitAll()
 
                         .anyRequest().authenticated()
