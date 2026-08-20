@@ -49,11 +49,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        // Allow CORS preflight requests.
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
-        // No access token.
-        // Let Spring Security decide whether the endpoint is public
-        // or requires authentication.
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -63,7 +66,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
 
-            // Access token is invalid or expired.
             if (!jwtService.isTokenValid(token)) {
                 sendUnauthorized(
                         response,
@@ -102,7 +104,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (Exception exception) {
-
             sendUnauthorized(
                     response,
                     "Invalid or expired access token"
