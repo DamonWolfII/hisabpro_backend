@@ -4,11 +4,7 @@ import com.hisabpro.backend.dto.purchase.PurchaseBillItemRequest;
 import com.hisabpro.backend.dto.purchase.PurchaseBillItemResponse;
 import com.hisabpro.backend.dto.purchase.PurchaseBillRequest;
 import com.hisabpro.backend.dto.purchase.PurchaseBillResponse;
-import com.hisabpro.backend.entity.Inventory;
-import com.hisabpro.backend.entity.Product;
-import com.hisabpro.backend.entity.PurchaseBill;
-import com.hisabpro.backend.entity.PurchaseBillItem;
-import com.hisabpro.backend.entity.User;
+import com.hisabpro.backend.entity.*;
 import com.hisabpro.backend.repository.InventoryRepository;
 import com.hisabpro.backend.repository.ProductRepository;
 import com.hisabpro.backend.repository.PurchaseBillRepository;
@@ -16,9 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class PurchaseBillService {
@@ -59,6 +53,19 @@ public class PurchaseBillService {
             );
         }
 
+        // Prevent the same product from appearing twice
+        Set<UUID> productIds = new HashSet<>();
+
+        for (PurchaseBillItemRequest item : request.items()) {
+
+            if (!productIds.add(item.productId())) {
+                throw new RuntimeException(
+                        "Product cannot appear more than once in the same bill: "
+                                + item.productId()
+                );
+            }
+        }
+
         PurchaseBill purchaseBill = new PurchaseBill();
 
         purchaseBill.setBillNumber(request.billNumber());
@@ -71,7 +78,6 @@ public class PurchaseBillService {
 
         for (PurchaseBillItemRequest itemRequest : request.items()) {
 
-            // Make sure product belongs to current company
             Product product =
                     productRepository
                             .findByIdAndCompanyId(
@@ -85,7 +91,6 @@ public class PurchaseBillService {
                                     )
                             );
 
-            // Calculate item total
             BigDecimal itemTotal =
                     itemRequest.purchasePrice()
                             .multiply(
@@ -94,7 +99,6 @@ public class PurchaseBillService {
                                     )
                             );
 
-            // Create bill item
             PurchaseBillItem billItem =
                     new PurchaseBillItem();
 
@@ -108,10 +112,11 @@ public class PurchaseBillService {
 
             billItems.add(billItem);
 
-            // Add to bill total
             billTotal = billTotal.add(itemTotal);
 
-            // Find or create inventory
+            /*
+             * Find existing inventory or create it.
+             */
             Inventory inventory =
                     inventoryRepository
                             .findByProductIdAndCompanyId(
@@ -131,7 +136,9 @@ public class PurchaseBillService {
                                 return newInventory;
                             });
 
-            // Increase inventory
+            /*
+             * Increase stock.
+             */
             inventory.setQuantity(
                     inventory.getQuantity()
                             + itemRequest.quantity()
@@ -179,3 +186,4 @@ public class PurchaseBillService {
         );
     }
 }
+
