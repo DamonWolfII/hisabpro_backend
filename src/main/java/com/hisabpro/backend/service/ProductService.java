@@ -10,7 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -59,21 +58,40 @@ public class ProductService {
         );
     }
 
+
     public PageResponse<ProductResponse> getAll(
             int page,
-            int limit
+            int limit,
+            String search
     ) {
 
         User user = currentUserService.getCurrentUser();
 
+        UUID companyId = user.getCompany().getId();
+
         PageRequest pageable =
                 PageRequest.of(page - 1, limit);
 
-        Page<Product> products =
-                productRepository.findAllByCompanyId(
-                        user.getCompany().getId(),
-                        pageable
-                );
+        Page<Product> products;
+
+        if (search != null && !search.trim().isEmpty()) {
+
+            products =
+                    productRepository
+                            .findAllByCompanyIdAndNameContainingIgnoreCase(
+                                    companyId,
+                                    search.trim(),
+                                    pageable
+                            );
+
+        } else {
+
+            products =
+                    productRepository.findAllByCompanyId(
+                            companyId,
+                            pageable
+                    );
+        }
 
         return new PageResponse<>(
                 products.getContent()
@@ -107,6 +125,66 @@ public class ProductService {
 
         return toResponse(product);
     }
+
+    public ProductResponse update(
+            UUID id,
+            ProductRequest request
+    ) {
+
+        User user = currentUserService.getCurrentUser();
+
+        UUID companyId = user.getCompany().getId();
+
+        Product product =
+                productRepository
+                        .findByIdAndCompanyId(id, companyId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Product not found"
+                                )
+                        );
+
+        if (request.sku() != null &&
+                !request.sku().equals(product.getSku()) &&
+                productRepository.existsBySkuAndCompanyId(
+                        request.sku(),
+                        companyId
+                )) {
+
+            throw new RuntimeException(
+                    "Product with this SKU already exists"
+            );
+        }
+
+        product.setName(request.name());
+        product.setSku(request.sku());
+        product.setUnit(request.unit());
+        product.setPurchasePrice(request.purchasePrice());
+        product.setSellingPrice(request.sellingPrice());
+
+        return toResponse(
+                productRepository.save(product)
+        );
+    }
+
+    public void delete(UUID id) {
+
+        User user = currentUserService.getCurrentUser();
+
+        UUID companyId = user.getCompany().getId();
+
+        Product product =
+                productRepository
+                        .findByIdAndCompanyId(id, companyId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Product not found"
+                                )
+                        );
+
+        productRepository.delete(product);
+    }
+
 
     private ProductResponse toResponse(Product product) {
 
