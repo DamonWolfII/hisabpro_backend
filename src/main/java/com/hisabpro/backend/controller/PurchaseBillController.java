@@ -1,5 +1,6 @@
 package com.hisabpro.backend.controller;
 
+import com.hisabpro.backend.dto.common.PageResponse;
 import com.hisabpro.backend.dto.purchase.PurchaseBillRequest;
 import com.hisabpro.backend.dto.purchase.PurchaseBillResponse;
 import com.hisabpro.backend.service.PurchaseBillService;
@@ -24,11 +25,20 @@ public class PurchaseBillController {
     public ResponseEntity<PurchaseBillResponse> create(
             @Valid @RequestBody PurchaseBillRequest request
     ) {
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(
                         purchaseBillService.create(request)
                 );
+    }
+
+    @GetMapping
+    public ResponseEntity<PageResponse<PurchaseBillResponse>> getAll(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        return ResponseEntity.ok(
+                purchaseBillService.getAll(page, limit)
+        );
     }
 }

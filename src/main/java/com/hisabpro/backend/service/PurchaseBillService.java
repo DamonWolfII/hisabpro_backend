@@ -8,6 +8,9 @@ import com.hisabpro.backend.entity.*;
 import com.hisabpro.backend.repository.InventoryRepository;
 import com.hisabpro.backend.repository.ProductRepository;
 import com.hisabpro.backend.repository.PurchaseBillRepository;
+import com.hisabpro.backend.dto.common.PageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -155,6 +158,41 @@ public class PurchaseBillService {
 
         return toResponse(savedBill);
     }
+
+
+    @Transactional(readOnly = true)
+    public PageResponse<PurchaseBillResponse> getAll(
+            int page,
+            int limit
+    ) {
+
+        User user = currentUserService.getCurrentUser();
+
+        UUID companyId = user.getCompany().getId();
+
+        PageRequest pageable =
+                PageRequest.of(page - 1, limit);
+
+        Page<PurchaseBill> bills =
+                purchaseBillRepository.findAllByCompanyId(
+                        companyId,
+                        pageable
+                );
+
+        return new PageResponse<>(
+                bills.getContent()
+                        .stream()
+                        .map(this::toResponse)
+                        .toList(),
+
+                bills.getTotalElements(),
+
+                page,
+
+                limit
+        );
+    }
+
 
     private PurchaseBillResponse toResponse(
             PurchaseBill bill
