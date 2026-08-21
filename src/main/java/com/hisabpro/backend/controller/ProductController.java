@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import com.hisabpro.backend.dto.common.PageResponse;
+
 import java.util.UUID;
 
 @RestController
@@ -34,10 +35,13 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse>> getAll() {
+    public ResponseEntity<PageResponse<ProductResponse>> getAll(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
 
         return ResponseEntity.ok(
-                productService.getAll()
+                productService.getAll(page, limit)
         );
     }
 

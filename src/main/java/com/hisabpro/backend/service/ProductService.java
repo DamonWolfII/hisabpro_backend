@@ -1,10 +1,13 @@
 package com.hisabpro.backend.service;
 
+import com.hisabpro.backend.dto.common.PageResponse;
 import com.hisabpro.backend.dto.product.ProductRequest;
 import com.hisabpro.backend.dto.product.ProductResponse;
 import com.hisabpro.backend.entity.Product;
 import com.hisabpro.backend.entity.User;
 import com.hisabpro.backend.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -56,15 +59,34 @@ public class ProductService {
         );
     }
 
-    public List<ProductResponse> getAll() {
+    public PageResponse<ProductResponse> getAll(
+            int page,
+            int limit
+    ) {
 
         User user = currentUserService.getCurrentUser();
 
-        return productRepository
-                .findAllByCompanyId(user.getCompany().getId())
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        PageRequest pageable =
+                PageRequest.of(page - 1, limit);
+
+        Page<Product> products =
+                productRepository.findAllByCompanyId(
+                        user.getCompany().getId(),
+                        pageable
+                );
+
+        return new PageResponse<>(
+                products.getContent()
+                        .stream()
+                        .map(this::toResponse)
+                        .toList(),
+
+                products.getTotalElements(),
+
+                page,
+
+                limit
+        );
     }
 
     public ProductResponse getById(UUID id) {
