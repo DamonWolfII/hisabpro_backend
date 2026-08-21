@@ -17,23 +17,14 @@ public class CurrentUserService {
 
     public User getCurrentUser() {
 
-        Authentication authentication =
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null ||
-                !authentication.isAuthenticated()) {
+        if (authentication == null || !authentication.isAuthenticated()) {
             throw new RuntimeException("User is not authenticated");
         }
 
         String email = authentication.getName();
 
-        return userRepository.findByEmail(email)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Authenticated user not found"
-                        )
-                );
+        return userRepository.findByEmailWithCompany(email).orElseThrow(() -> new RuntimeException("Authenticated user not found"));
     }
 }
